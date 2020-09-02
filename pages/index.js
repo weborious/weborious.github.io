@@ -1,68 +1,60 @@
 import Head from 'next/head'
-import styles from '../styles/Home.module.css'
 import Link from "next/link"
+import matter from "gray-matter"
+import fs from "fs"
+import Menu from "../components/Menu"
 
-export default function Home() {
+
+export default function Home({posts}) {
   return (
-    <div className={styles.container}>
+    <div className="mx-auto mt-6 md:w-9/12 p-2 border">
       <Head>
-        <title>Create Next App</title>
+        <title>Weborious Blog</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <Link href = "/about">About</Link>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
+      <h1 className="text-2xl">Weborious Blog</h1>
+      <Menu />
+      <h3 className="mt-6 text-xl">Show Latest Posts</h3>
+      <ul className = "p-0 mt-1">
+        {posts.map(post => 
+          <li className="mb-2 pl-1 text-gray-600">         
+            <Link href = {`post/${post.slug}`}><a>{post.data.title} ({post.data.date})</a></Link>              
+          </li>
+        )}
+      </ul>
+      <br /><br />
+      {/* <pre>{JSON.stringify(posts, null, 8)}</pre> */}
     </div>
   )
+}
+
+export async function getStaticProps(){
+  const files = fs.readdirSync(`${process.cwd()}/content/posts`);
+
+  const posts = files.map((filename)=>{
+    const markdownData = fs.readFileSync(`content/posts/${filename}`)
+    .toString();
+
+    const {data} = matter(markdownData);
+
+    const options = { year: "numeric", month: "long", day: "numeric" };
+
+    const formattedDate = data.date.toLocaleDateString("en-US", options);
+
+    const postData = {
+      ...data,
+      date: formattedDate,
+    };
+
+    return {
+      slug: filename.replace(".md", ""),
+      data:postData,
+    };
+  });
+
+  return {
+    props:{
+      posts,
+    }
+  }
 }
